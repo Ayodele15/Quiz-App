@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: #f4f4f4;
+            padding: 20px;
+        }
+        #quiz-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+            position: relative;
+        }
+        .question {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+        .answer-btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+            background: #007bff;
+            color: white;
+            border-radius: 5px;
+        }
+        .answer-btn:hover {
+            background: #0056b3;
+        }
+        #next-btn {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            background: green;
+            color: white;
+            border-radius: 5px;
+            display: none;
+        }
+        #timer {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: red;
+        }
+        #high-score {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            color: green;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="quiz-container">
+        <div id="timer">Time: 30s</div>
+        <h2 class="question" id="question">Loading...</h2>
+        <div id="answer-buttons"></div>
+        <button id="next-btn" onclick="nextQuestion()">Next</button>
+    </div>
+
+    <p id="high-score"></p>
+
+    <script>
+        const quizData = [
+            {
+                question: "What is the capital of France?",
+                answers: ["Paris", "London", "Berlin", "Madrid"],
+                correct: "Paris"
+            },
+            {
+                question: "Which planet is known as the Red Planet?",
+                answers: ["Earth", "Mars", "Jupiter", "Venus"],
+                correct: "Mars"
+            },
+            {
+                question: "What is the largest ocean on Earth?",
+                answers: ["Atlantic", "Indian", "Arctic", "Pacific"],
+                correct: "Pacific"
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let timeLeft = 30;
+        let timer;
+
+        const questionElement = document.getElementById("question");
+        const answerButtonsElement = document.getElementById("answer-buttons");
+        const nextButton = document.getElementById("next-btn");
+        const timerElement = document.getElementById("timer");
+        const highScoreElement = document.getElementById("high-score");
+
+        function loadQuestion() {
+            resetState();
+            startTimer();
+
+            let currentQuestion = quizData[currentQuestionIndex];
+            questionElement.innerText = currentQuestion.question;
+
+            currentQuestion.answers.forEach(answer => {
+                const button = document.createElement("button");
+                button.innerText = answer;
+                button.classList.add("answer-btn");
+                button.addEventListener("click", () => selectAnswer(button, currentQuestion.correct));
+                answerButtonsElement.appendChild(button);
+            });
+        }
+
+        function resetState() {
+            clearInterval(timer);
+            timeLeft = 30;
+            timerElement.innerText = `Time: ${timeLeft}s`;
+            nextButton.style.display = "none";
+            answerButtonsElement.innerHTML = "";
+        }
+
+        function startTimer() {
+            timer = setInterval(() => {
+                timeLeft--;
+                timerElement.innerText = `Time: ${timeLeft}s`;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    disableButtons();
+                    nextButton.style.display = "block";
+                }
+            }, 1000);
+        }
+
+        function selectAnswer(button, correctAnswer) {
+            clearInterval(timer);
+
+            if (button.innerText === correctAnswer) {
+                button.style.backgroundColor = "green";
+                score++;
+            } else {
+                button.style.backgroundColor = "red";
+            }
+
+            disableButtons();
+            nextButton.style.display = "block";
+        }
+
+        function disableButtons() {
+            Array.from(answerButtonsElement.children).forEach(btn => btn.disabled = true);
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < quizData.length) {
+                loadQuestion();
+            } else {
+                showScore();
+            }
+        }
+
+        function showScore() {
+            questionElement.innerText = `You scored ${score} out of ${quizData.length}!`;
+            answerButtonsElement.innerHTML = "";
+            nextButton.innerText = "Restart";
+            nextButton.onclick = () => location.reload();
+            nextButton.style.display = "block";
+
+            updateHighScore();
+        }
+
+        function updateHighScore() {
+            let highScore = localStorage.getItem("quizHighScore") || 0;
+            if (score > highScore) {
+                localStorage.setItem("quizHighScore", score);
+                highScore = score;
+            }
+            highScoreElement.innerText = `High Score: ${highScore}`;
+        }
+
+        updateHighScore();
+        loadQuestion();
+    </script>
+
+</body>
+</html>
